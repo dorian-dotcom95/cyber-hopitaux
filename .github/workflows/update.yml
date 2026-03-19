@@ -2,16 +2,18 @@ name: Mise a jour automatique du site
 
 on:
   schedule:
-    - cron: '0 8 * * *' # Se lance tous les jours à 8h du matin
-  workflow_dispatch:      # Permet de le lancer à la main quand on veut
+    - cron: '0 8 * * *'
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Installer Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: '3.9'
       - name: Installer les outils
@@ -20,8 +22,8 @@ jobs:
         run: python bot_hopital.py
       - name: Publier les changements
         run: |
-          git config --global user.name 'Bot-Cyber'
-          git config --global user.email 'bot@cyber.com'
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add index.html
           git commit -m "Mise a jour des alertes" || exit 0
           git push
