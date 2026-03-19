@@ -1,44 +1,51 @@
 import feedparser
+import urllib.parse
 
-# 1. On prépare la structure de ton site (le haut de la page)
+# 1. On prépare la structure du site
 html = """
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Mon Site Cyber Hôpitaux</title>
+    <title>Observatoire Cyber Médical</title>
     <style>
-        body { font-family: sans-serif; background: #f0f2f5; padding: 20px; }
-        h1 { color: #d9534f; border-bottom: 2px solid #d9534f; }
-        .alerte { background: white; padding: 15px; margin-bottom: 10px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        a { color: #0275d8; text-decoration: none; font-weight: bold; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; padding: 30px; }
+        h1 { color: #2c3e50; border-bottom: 3px solid #e74c3c; padding-bottom: 10px; }
+        .alerte { background: white; padding: 20px; margin-bottom: 15px; border-radius: 10px; border-left: 8px solid #e74c3c; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .date { color: #7f8c8d; font-size: 0.9em; font-weight: bold; }
+        h3 { margin-top: 5px; color: #c0392b; }
+        a { color: #2980b9; text-decoration: none; font-weight: bold; }
+        .vide { text-align: center; padding: 50px; color: #7f8c8d; font-style: italic; }
     </style>
 </head>
 <body>
     <h1>🛡️ Alertes Cyber dans les Hôpitaux (Depuis Sept. 2024)</h1>
 """
 
-# 2. Le bot va chercher les infos
-flux_rss = ["https://www.cert.ssi.gouv.fr/alerte/feed/", "https://www.lemondeinformatique.fr/flux-rss/thematique/securite/rss.xml"]
-mots_cles = ["hôpital", "hopital", "chu", "clinique", "santé", "medical"]
+# 2. Utilisation de Google News pour avoir des archives plus larges
+# On cherche "cyberattaque hopital" depuis le 01/09/2024
+query = urllib.parse.quote('cyberattaque hopital after:2024-09-01')
+url_google = f"https://news.google.com/rss/search?q={query}&hl=fr&gl=FR&ceid=FR:fr"
 
-print("Le bot travaille... génération du site en cours.")
+print("Recherche des archives en cours...")
+flux = feedparser.parse(url_google)
 
-for url in flux_rss:
-    flux = feedparser.parse(url)
+if len(flux.entries) == 0:
+    html += "<div class='vide'>Aucune alerte trouvée pour le moment. Réessayez plus tard.</div>"
+else:
     for art in flux.entries:
-        contenu = (art.title + " " + getattr(art, 'summary', '')).lower()
-        if any(mot in contenu for mot in mots_cles):
-            # 3. On ajoute l'alerte dans le code du site
-            html += f"""
-            <div class="alerte">
-                <h3>{art.title}</h3>
-                <p><a href="{art.link}" target="_blank">Clique ici pour voir l'article</a></p>
-            </div>
-            """
+        # On affiche chaque article trouvé par Google News
+        html += f"""
+        <div class="alerte">
+            <div class="date">Publié le : {art.published}</div>
+            <h3>{art.title}</h3>
+            <p><a href="{art.link}" target="_blank">👉 Lire l'article complet</a></p>
+        </div>
+        """
 
-# 4. On finit le code du site et on enregistre
 html += "</body></html>"
+
+# 3. Enregistrement
 with open("index.html", "w", encoding="utf-8") as f:
     f.write(html)
 
-print("TERMINÉ ! Cherche le fichier 'index.html' sur ton bureau et ouvre-le.")
+print(f"TERMINÉ ! {len(flux.entries)} articles ajoutés.")
